@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InfinitePay Splash Preview</title>
+  <!-- Rive Runtime - WebGL2 -->
+  <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
+  <style>
+    @font-face {
+      font-family: 'CeraPro';
+      src: url('assets/fonts/CeraPro-Regular.otf') format('opentype');
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: 'CeraPro';
+      src: url('assets/fonts/CeraPro-Medium.otf') format('opentype');
+      font-weight: 500;
+    }
+    @font-face {
+      font-family: 'CeraPro';
+      src: url('assets/fonts/CeraPro-Bold.otf') format('opentype');
+      font-weight: 700;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'CeraPro', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #000;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Splash content */
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      z-index: 1;
+      position: relative;
+    }
+
+    .splash-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .splash-container.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+
+    .icon-container {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+    }
+
+    .icon-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .splash-text {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.4;
+      max-width: 260px;
+      padding: 0 20px;
+    }
+
+    /* Rive container - full screen */
+    #rive-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+      display: none;
+    }
+
+    #rive-container.visible {
+      display: block;
+    }
+
+    #rive-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Reload button */
+    .reload-btn {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: 'CeraPro', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      z-index: 100;
+    }
+
+    .reload-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Product indicator */
+    .product-indicator {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      z-index: 100;
+    }
+
+    /* Status indicator */
+    .status {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 11px;
+      z-index: 100;
+    }
+
+    /* Settings panel */
+    .settings-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 200;
+      transition: background 0.2s;
+    }
+
+    .settings-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-panel {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: rgba(20, 20, 20, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      z-index: 200;
+      min-width: 280px;
+      display: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .settings-panel.visible {
+      display: block;
+    }
+
+    .settings-panel h3 {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .setting-group {
+      margin-bottom: 16px;
+    }
+
+    .setting-group label {
+      display: block;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .setting-group input[type="range"] {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    .setting-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #00D26A;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .setting-value {
+      color: #00D26A;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .preset-btn.active {
+      background: #00D26A;
+      border-color: #00D26A;
+      color: #000;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="product-indicator" id="productIndicator">Carregando...</div>
+  <div class="status" id="status">Inicializando...</div>
+
+  <!-- Settings -->
+  <button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()">⚙</button>
+  
+  <div class="settings-panel" id="settingsPanel">
+    <h3>⚙ Configurações</h3>
+    
+    <div class="setting-group">
+      <label>Tamanho do Ícone</label>
+      <input type="range" id="iconSizeSlider" min="60" max="200" value="120" oninput="updateIconSize(this.value)">
+      <div class="setting-value"><span id="iconSizeValue">120</span>px</div>
+    </div>
+    
+    <div class="setting-group">
+      <label>Presets</label>
+      <div class="preset-buttons">
+        <button class="preset-btn" onclick="setIconSize(80)">Pequeno (80)</button>
+        <button class="preset-btn active" onclick="setIconSize(120)">Médio (120)</button>
+        <button class="preset-btn" onclick="setIconSize(160)">Grande (160)</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="setting-group">
+      <label>Tempo de Leitura (ms)</label>
+      <input type="range" id="readingTimeSlider" min="1500" max="5000" value="2500" step="100" oninput="updateReadingTime(this.value)">
+      <div class="setting-value"><span id="readingTimeValue">2500</span>ms</div>
+    </div>
+
+    <div class="setting-group">
+      <label>Tempo de Loading (ms)</label>
+      <input type="range" id="loadingTimeSlider" min="1000" max="5000" value="3000" step="100" oninput="updateLoadingTime(this.value)">
+      <div class="setting-value"><span id="loadingTimeValue">3000</span>ms</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="setting-group">
+      <label>Escolher Produto</label>
+      <div class="preset-buttons">
+        <button class="preset-btn" onclick="selectProduct('pix')">PIX</button>
+        <button class="preset-btn" onclick="selectProduct('link')">Link</button>
+        <button class="preset-btn" onclick="selectProduct('loja')">Loja</button>
+        <button class="preset-btn" onclick="selectProduct('random')">🎲 Random</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="splash-container" id="splashContainer">
+    <div class="icon-container">
+      <img id="iconFrame" src="" alt="Product Icon">
+    </div>
+    <p class="splash-text" id="splashText"></p>
+  </div>
+
+  <!-- Rive canvas -->
+  <div id="rive-container">
+    <canvas id="rive-canvas"></canvas>
+  </div>
+
+  <button class="reload-btn" onclick="location.reload()">
+    ↻ Sortear novamente
+  </button>
+
+  <script>
+    // Product configuration
+    const products = [
+      {
+        id: 'pix',
+        text: 'Receba via Pix na hora',
+        framesPath: 'assets/products/pix',
+        frameCount: 63,
+        framePattern: 'OFF83_badge_pix_ANIMATION_HM_001_XXXX.webp'
+      },
+      {
+        id: 'link',
+        text: 'Crie links de pagamento em segundos',
+        framesPath: 'assets/products/link',
+        frameCount: 53,
+        framePattern: 'OFF83_Link_ANIMATION_HM_001_XXXX.webp'
+      },
+      {
+        id: 'loja',
+        text: 'Sua loja online pronta pra vender',
+        framesPath: 'assets/products/loja',
+        frameCount: 60,
+        framePattern: 'OFF83_loja_online_ANIMATION_HM_001_XXXX.webp'
+      }
+    ];
+
+    // State
+    let currentFrame = 0;
+    let animationId = null;
+    let selectedProduct = null;
+    let riveInstance = null;
+    let playFixInput = null;
+    let riveReady = false;
+    const FPS = 60;
+    const FRAME_DURATION = 1000 / FPS;
+
+    // Settings state
+    let iconSize = 120;
+    let customReadingTime = null;
+    let loadingTime = 3000;
+    let forcedProduct = null;
+
+    // Settings functions
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.classList.toggle('visible');
+    }
+
+    function updateIconSize(size) {
+      iconSize = parseInt(size);
+      document.getElementById('iconSizeValue').textContent = size;
+      localStorage.setItem('iconSize', size);
+      
+      const iconContainer = document.querySelector('.icon-container');
+      iconContainer.style.width = size + 'px';
+      iconContainer.style.height = size + 'px';
+      
+      // Update preset buttons
+      document.querySelectorAll('.setting-group:first-of-type .preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+    }
+
+    function setIconSize(size) {
+      document.getElementById('iconSizeSlider').value = size;
+      updateIconSize(size);
+      
+      // Update preset buttons
+      document.querySelectorAll('.setting-group:nth-of-type(2) .preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.includes(size)) {
+          btn.classList.add('active');
+        }
+      });
+    }
+
+    function updateReadingTime(time) {
+      customReadingTime = parseInt(time);
+      document.getElementById('readingTimeValue').textContent = time;
+      localStorage.setItem('customReadingTime', time);
+    }
+
+    function updateLoadingTime(time) {
+      loadingTime = parseInt(time);
+      document.getElementById('loadingTimeValue').textContent = time;
+      localStorage.setItem('loadingTime', time);
+    }
+
+    function selectProduct(productId) {
+      localStorage.setItem('forcedProduct', productId);
+      location.reload();
+    }
+
+    // Get reading time (custom or calculated)
+    function getReadingTime(text) {
+      // Check localStorage for custom time
+      const savedTime = localStorage.getItem('customReadingTime');
+      if (savedTime) return parseInt(savedTime);
+      
+      return calculateReadingTime(text);
+    }
+
+    // Get loading time from localStorage
+    function getLoadingTime() {
+      const savedTime = localStorage.getItem('loadingTime');
+      return savedTime ? parseInt(savedTime) : 3000;
+    }
+
+    // Get icon size from localStorage
+    function getIconSize() {
+      const savedSize = localStorage.getItem('iconSize');
+      return savedSize ? parseInt(savedSize) : 120;
+    }
+
+    // Save settings to localStorage
+    function saveSettings() {
+      localStorage.setItem('iconSize', iconSize);
+      if (customReadingTime) {
+        localStorage.setItem('customReadingTime', customReadingTime);
+      }
+      localStorage.setItem('loadingTime', loadingTime);
+    }
+
+    // Status update
+    function setStatus(text) {
+      document.getElementById('status').textContent = text;
+      console.log('Status:', text);
+    }
+
+    // Select random product (or forced product from settings)
+    function selectRandomProduct() {
+      // Check localStorage for forced product
+      const savedProduct = localStorage.getItem('forcedProduct');
+      if (savedProduct && savedProduct !== 'random') {
+        const product = products.find(p => p.id === savedProduct);
+        if (product) return product;
+      }
+      
+      const index = Math.floor(Math.random() * products.length);
+      return products[index];
+    }
+
+    // Generate frame path
+    function getFramePath(product, frameNumber) {
+      const paddedNumber = String(frameNumber).padStart(4, '0');
+      const fileName = product.framePattern.replace('XXXX', paddedNumber);
+      return `${product.framesPath}/${fileName}`;
+    }
+
+    // Preload frames
+    async function preloadFrames(product) {
+      const promises = [];
+      for (let i = 1; i <= product.frameCount; i++) {
+        const img = new Image();
+        img.src = getFramePath(product, i);
+        promises.push(new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        }));
+      }
+      await Promise.all(promises);
+    }
+
+    // Play icon animation
+    function playAnimation(product) {
+      const iconFrame = document.getElementById('iconFrame');
+      let lastTime = 0;
+      
+      function animate(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const elapsed = timestamp - lastTime;
+        
+        if (elapsed >= FRAME_DURATION) {
+          currentFrame++;
+          if (currentFrame <= product.frameCount) {
+            iconFrame.src = getFramePath(product, currentFrame);
+            lastTime = timestamp;
+          } else {
+            return; // Stay on last frame
+          }
+        }
+        
+        animationId = requestAnimationFrame(animate);
+      }
+      
+      currentFrame = 1;
+      iconFrame.src = getFramePath(product, 1);
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // Initialize Rive
+    async function initRive() {
+      return new Promise((resolve) => {
+        const canvas = document.getElementById('rive-canvas');
+        
+        // Set canvas size to fill screen
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        
+        try {
+          riveInstance = new rive.Rive({
+            src: 'assets/rive/ip_app_intro.riv',
+            canvas: canvas,
+            autoplay: true, // Start immediately so it's ready
+            stateMachines: 'State Machine 1',
+            fit: rive.Fit.Cover, // Fill entire canvas, crop if needed
+            alignment: rive.Alignment.Center,
+            onLoad: () => {
+              console.log('Rive loaded!');
+              riveInstance.resizeDrawingSurfaceToCanvas();
+              
+              // Get inputs
+              const inputs = riveInstance.stateMachineInputs('State Machine 1');
+              console.log('Rive inputs:', inputs);
+              
+              if (inputs) {
+                playFixInput = inputs.find(i => i.name === 'play_fix');
+                console.log('play_fix input:', playFixInput);
+              }
+              
+              riveReady = true;
+              resolve();
+            },
+            onLoadError: (err) => {
+              console.error('Rive load error:', err);
+              resolve();
+            },
+            onStateChange: (event) => {
+              console.log('Rive state:', event.data);
+            }
+          });
+        } catch (error) {
+          console.error('Rive init error:', error);
+          resolve();
+        }
+      });
+    }
+
+    // Show Rive and trigger ENTER (1st click)
+    function triggerRiveEnter() {
+      const riveContainer = document.getElementById('rive-container');
+      const splashContainer = document.getElementById('splashContainer');
+      
+      setStatus('Rive Enter...');
+      
+      // Hide splash immediately
+      splashContainer.classList.add('hidden');
+      
+      // Fire trigger BEFORE showing (so animation is ready)
+      if (playFixInput) {
+        playFixInput.fire();
+        console.log('🚀 Fired play_fix (ENTER)');
+      }
+      
+      // Show Rive container instantly
+      riveContainer.classList.add('visible');
+    }
+
+    // Trigger EXIT (2nd click)
+    function triggerRiveExit() {
+      setStatus('Rive Exit...');
+      
+      // Fire play_fix (2nd time = EXIT)
+      if (playFixInput) {
+        playFixInput.fire();
+        console.log('🚀 Fired play_fix (EXIT)');
+      }
+    }
+
+    // Calculate reading time (2.5s - 4s)
+    function calculateReadingTime(text) {
+      const words = text.split(' ').length;
+      const wpm = 150;
+      const seconds = Math.min(Math.max((words / wpm) * 60, 2.5), 4.0);
+      return seconds * 1000;
+    }
+
+    // Handle resize
+    function handleResize() {
+      const canvas = document.getElementById('rive-canvas');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      if (riveInstance) {
+        riveInstance.resizeDrawingSurfaceToCanvas();
+      }
+    }
+
+    // Load saved settings
+    function loadSettings() {
+      // Icon size
+      iconSize = getIconSize();
+      document.getElementById('iconSizeSlider').value = iconSize;
+      document.getElementById('iconSizeValue').textContent = iconSize;
+      
+      const iconContainer = document.querySelector('.icon-container');
+      iconContainer.style.width = iconSize + 'px';
+      iconContainer.style.height = iconSize + 'px';
+      
+      // Reading time
+      const savedReadingTime = localStorage.getItem('customReadingTime');
+      if (savedReadingTime) {
+        customReadingTime = parseInt(savedReadingTime);
+        document.getElementById('readingTimeSlider').value = customReadingTime;
+        document.getElementById('readingTimeValue').textContent = customReadingTime;
+      }
+      
+      // Loading time
+      loadingTime = getLoadingTime();
+      document.getElementById('loadingTimeSlider').value = loadingTime;
+      document.getElementById('loadingTimeValue').textContent = loadingTime;
+    }
+
+    // Initialize splash
+    async function initSplash() {
+      const container = document.getElementById('splashContainer');
+      const textElement = document.getElementById('splashText');
+      const indicator = document.getElementById('productIndicator');
+      
+      // Load saved settings
+      loadSettings();
+      
+      setStatus('Carregando Rive...');
+      
+      // Init Rive first
+      await initRive();
+      
+      setStatus('Sorteando produto...');
+      
+      // Select random product
+      selectedProduct = selectRandomProduct();
+      indicator.textContent = selectedProduct.id.toUpperCase();
+      
+      // Set text
+      textElement.textContent = selectedProduct.text;
+      
+      setStatus('Carregando frames...');
+      
+      // Preload frames
+      await preloadFrames(selectedProduct);
+      
+      setStatus('Exibindo splash...');
+      
+      // Show container
+      container.classList.add('visible');
+      
+      // Play icon animation
+      playAnimation(selectedProduct);
+      
+      // After reading time, trigger Rive ENTER
+      const readingTime = customReadingTime || calculateReadingTime(selectedProduct.text);
+      console.log(`Reading time: ${readingTime}ms`);
+      
+      setTimeout(() => {
+        triggerRiveEnter();
+        
+        // Simulate "loading complete", then trigger EXIT
+        setTimeout(() => {
+          triggerRiveExit();
+          
+          // After exit animation, show "complete" status
+          setTimeout(() => {
+            setStatus('Splash completo!');
+          }, 1500);
+        }, loadingTime);
+        
+      }, readingTime);
+    }
+
+    // Event listeners
+    window.addEventListener('load', initSplash);
+    window.addEventListener('resize', handleResize);
+  </script>
+</body>
+</html>
