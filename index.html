@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>InfinitePay Splash Preview</title>
   <!-- Rive Runtime - WebGL2 -->
   <script src="https://unpkg.com/@rive-app/webgl2@latest"></script>
@@ -31,8 +31,48 @@
 
     body {
       font-family: 'CeraPro', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #000;
+      background: #1a1a1a;
       min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Phone Frame Container (Desktop only) */
+    .phone-frame {
+      position: relative;
+      width: 393px;
+      height: 852px;
+      background: #000;
+      border-radius: 48px;
+      box-shadow: 
+        0 0 0 12px #2a2a2a,
+        0 0 0 14px #3a3a3a,
+        0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    /* Dynamic Island */
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 36px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 1000;
+    }
+
+    /* Screen content wrapper */
+    .screen-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -85,13 +125,13 @@
       padding: 0 20px;
     }
 
-    /* Rive container - full screen */
+    /* Rive container - fills phone screen */
     #rive-container {
-      position: fixed;
+      position: absolute;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       z-index: 10;
       display: none;
     }
@@ -106,88 +146,108 @@
       display: block;
     }
 
-    /* Reload button */
+    /* Settings button - OUTSIDE phone frame with protection */
+    .settings-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 9999;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    .settings-toggle:hover {
+      background: rgba(0, 0, 0, 0.95);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: scale(1.05);
+    }
+
+    /* Reload button - OUTSIDE phone frame with protection */
     .reload-btn {
       position: fixed;
-      bottom: 40px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       color: #fff;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
       font-family: 'CeraPro', sans-serif;
       font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      transition: background 0.2s;
-      z-index: 100;
+      transition: all 0.2s;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
     }
 
     .reload-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.95);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateX(-50%) scale(1.02);
     }
 
-    /* Product indicator */
+    /* Product indicator - OUTSIDE phone frame with protection */
     .product-indicator {
       position: fixed;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.6);
-      padding: 8px 16px;
-      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 10px 20px;
+      border-radius: 24px;
       font-size: 12px;
+      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 1px;
-      z-index: 100;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
     }
 
-    /* Status indicator */
+    /* Status indicator - OUTSIDE phone frame */
     .status {
       position: fixed;
-      bottom: 100px;
+      bottom: 90px;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.5);
       font-size: 11px;
-      z-index: 100;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 12px;
+      border-radius: 6px;
     }
 
-    /* Settings panel */
-    .settings-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      font-size: 18px;
-      cursor: pointer;
-      z-index: 200;
-      transition: background 0.2s;
-    }
-
-    .settings-toggle:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
+    /* Settings panel with strong protection */
     .settings-panel {
       position: fixed;
-      top: 70px;
+      top: 74px;
       right: 20px;
-      background: rgba(20, 20, 20, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      background: rgba(15, 15, 15, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
       padding: 20px;
-      z-index: 200;
-      min-width: 280px;
+      z-index: 9999;
+      min-width: 300px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
       display: none;
-      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
     }
 
     .settings-panel.visible {
@@ -271,17 +331,116 @@
       background: rgba(255, 255, 255, 0.1);
       margin: 16px 0;
     }
+
+    /* Toggle switch for low rez */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch.active {
+      background: #00D26A;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(22px);
+    }
+
+    .toggle-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+    }
+
+    /* Mobile styles */
+    @media (max-width: 500px) {
+      body {
+        background: #000;
+      }
+
+      .phone-frame {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .phone-frame::before {
+        display: none;
+      }
+
+      .settings-toggle {
+        top: env(safe-area-inset-top, 10px);
+        right: 10px;
+      }
+
+      .product-indicator {
+        top: env(safe-area-inset-top, 10px);
+      }
+
+      .reload-btn {
+        bottom: calc(env(safe-area-inset-bottom, 10px) + 20px);
+      }
+
+      .status {
+        bottom: calc(env(safe-area-inset-bottom, 10px) + 70px);
+      }
+
+      .settings-panel {
+        top: 64px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-height: calc(100vh - 140px);
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- UI Controls (outside phone frame) -->
   <div class="product-indicator" id="productIndicator">Carregando...</div>
   <div class="status" id="status">Inicializando...</div>
 
-  <!-- Settings -->
+  <!-- Settings Toggle -->
   <button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()">⚙</button>
   
+  <!-- Settings Panel -->
   <div class="settings-panel" id="settingsPanel">
     <h3>⚙ Configurações</h3>
+    
+    <!-- Low Rez Toggle -->
+    <div class="setting-group">
+      <div class="toggle-container">
+        <span class="toggle-label">Usar assets Low Rez</span>
+        <div class="toggle-switch" id="lowRezToggle" onclick="toggleLowRez()"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
     
     <div class="setting-group">
       <label>Tamanho do Ícone</label>
@@ -324,17 +483,23 @@
       </div>
     </div>
   </div>
-  
-  <div class="splash-container" id="splashContainer">
-    <div class="icon-container">
-      <img id="iconFrame" src="" alt="Product Icon">
-    </div>
-    <p class="splash-text" id="splashText"></p>
-  </div>
 
-  <!-- Rive canvas -->
-  <div id="rive-container">
-    <canvas id="rive-canvas"></canvas>
+  <!-- Phone Frame (iPhone 14 Pro size) -->
+  <div class="phone-frame" id="phoneFrame">
+    <div class="screen-content">
+      <!-- Splash Container -->
+      <div class="splash-container" id="splashContainer">
+        <div class="icon-container">
+          <img id="iconFrame" src="" alt="Product Icon">
+        </div>
+        <p class="splash-text" id="splashText"></p>
+      </div>
+
+      <!-- Rive canvas (inside phone screen) -->
+      <div id="rive-container">
+        <canvas id="rive-canvas"></canvas>
+      </div>
+    </div>
   </div>
 
   <button class="reload-btn" onclick="location.reload()">
@@ -347,21 +512,18 @@
       {
         id: 'pix',
         text: 'Receba via Pix na hora',
-        framesPath: 'assets/products/pix',
         frameCount: 63,
         framePattern: 'OFF83_badge_pix_ANIMATION_HM_001_XXXX.webp'
       },
       {
         id: 'link',
         text: 'Crie links de pagamento em segundos',
-        framesPath: 'assets/products/link',
         frameCount: 53,
         framePattern: 'OFF83_Link_ANIMATION_HM_001_XXXX.webp'
       },
       {
         id: 'loja',
         text: 'Sua loja online pronta pra vender',
-        framesPath: 'assets/products/loja',
         frameCount: 60,
         framePattern: 'OFF83_loja_online_ANIMATION_HM_001_XXXX.webp'
       }
@@ -382,11 +544,25 @@
     let customReadingTime = null;
     let loadingTime = 3000;
     let forcedProduct = null;
+    let useLowRez = false;
+
+    // Get the assets path based on low rez setting
+    function getAssetsPath() {
+      return useLowRez ? 'assets/products_low_rez' : 'assets/products';
+    }
 
     // Settings functions
     function toggleSettings() {
       const panel = document.getElementById('settingsPanel');
       panel.classList.toggle('visible');
+    }
+
+    function toggleLowRez() {
+      useLowRez = !useLowRez;
+      const toggle = document.getElementById('lowRezToggle');
+      toggle.classList.toggle('active', useLowRez);
+      localStorage.setItem('useLowRez', useLowRez);
+      location.reload();
     }
 
     function updateIconSize(size) {
@@ -409,7 +585,7 @@
       updateIconSize(size);
       
       // Update preset buttons
-      document.querySelectorAll('.setting-group:nth-of-type(2) .preset-btn').forEach(btn => {
+      document.querySelectorAll('.setting-group:nth-of-type(4) .preset-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.textContent.includes(size)) {
           btn.classList.add('active');
@@ -436,10 +612,8 @@
 
     // Get reading time (custom or calculated)
     function getReadingTime(text) {
-      // Check localStorage for custom time
       const savedTime = localStorage.getItem('customReadingTime');
       if (savedTime) return parseInt(savedTime);
-      
       return calculateReadingTime(text);
     }
 
@@ -455,15 +629,6 @@
       return savedSize ? parseInt(savedSize) : 120;
     }
 
-    // Save settings to localStorage
-    function saveSettings() {
-      localStorage.setItem('iconSize', iconSize);
-      if (customReadingTime) {
-        localStorage.setItem('customReadingTime', customReadingTime);
-      }
-      localStorage.setItem('loadingTime', loadingTime);
-    }
-
     // Status update
     function setStatus(text) {
       document.getElementById('status').textContent = text;
@@ -472,13 +637,11 @@
 
     // Select random product (or forced product from settings)
     function selectRandomProduct() {
-      // Check localStorage for forced product
       const savedProduct = localStorage.getItem('forcedProduct');
       if (savedProduct && savedProduct !== 'random') {
         const product = products.find(p => p.id === savedProduct);
         if (product) return product;
       }
-      
       const index = Math.floor(Math.random() * products.length);
       return products[index];
     }
@@ -487,7 +650,7 @@
     function getFramePath(product, frameNumber) {
       const paddedNumber = String(frameNumber).padStart(4, '0');
       const fileName = product.framePattern.replace('XXXX', paddedNumber);
-      return `${product.framesPath}/${fileName}`;
+      return `${getAssetsPath()}/${product.id}/${fileName}`;
     }
 
     // Preload frames
@@ -535,27 +698,31 @@
     async function initRive() {
       return new Promise((resolve) => {
         const canvas = document.getElementById('rive-canvas');
+        const container = document.getElementById('rive-container');
         
-        // Set canvas size to fill screen
+        // Get phone frame dimensions
+        const phoneFrame = document.getElementById('phoneFrame');
+        const rect = phoneFrame.getBoundingClientRect();
+        
+        // Set canvas size to match phone screen
         const dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
         
         try {
           riveInstance = new rive.Rive({
             src: 'assets/rive/ip_app_intro.riv',
             canvas: canvas,
-            autoplay: true, // Start immediately so it's ready
+            autoplay: true,
             stateMachines: 'State Machine 1',
-            fit: rive.Fit.Cover, // Fill entire canvas, crop if needed
+            fit: rive.Fit.Cover,
             alignment: rive.Alignment.Center,
             onLoad: () => {
               console.log('Rive loaded!');
               riveInstance.resizeDrawingSurfaceToCanvas();
               
-              // Get inputs
               const inputs = riveInstance.stateMachineInputs('State Machine 1');
               console.log('Rive inputs:', inputs);
               
@@ -606,7 +773,6 @@
     function triggerRiveExit() {
       setStatus('Rive Exit...');
       
-      // Fire play_fix (2nd time = EXIT)
       if (playFixInput) {
         playFixInput.fire();
         console.log('🚀 Fired play_fix (EXIT)');
@@ -624,11 +790,15 @@
     // Handle resize
     function handleResize() {
       const canvas = document.getElementById('rive-canvas');
+      const phoneFrame = document.getElementById('phoneFrame');
+      const rect = phoneFrame.getBoundingClientRect();
+      
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      
       if (riveInstance) {
         riveInstance.resizeDrawingSurfaceToCanvas();
       }
@@ -636,6 +806,11 @@
 
     // Load saved settings
     function loadSettings() {
+      // Low rez toggle
+      useLowRez = localStorage.getItem('useLowRez') === 'true';
+      const lowRezToggle = document.getElementById('lowRezToggle');
+      lowRezToggle.classList.toggle('active', useLowRez);
+      
       // Icon size
       iconSize = getIconSize();
       document.getElementById('iconSizeSlider').value = iconSize;
@@ -677,7 +852,7 @@
       
       // Select random product
       selectedProduct = selectRandomProduct();
-      indicator.textContent = selectedProduct.id.toUpperCase();
+      indicator.textContent = selectedProduct.id.toUpperCase() + (useLowRez ? ' (LOW REZ)' : '');
       
       // Set text
       textElement.textContent = selectedProduct.text;
