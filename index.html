@@ -539,6 +539,9 @@
     const FPS = 60;
     const FRAME_DURATION = 1000 / FPS;
 
+    // Frame cache - stores preloaded Image objects
+    let frameCache = [];
+
     // Settings state
     let iconSize = 120;
     let customReadingTime = null;
@@ -653,21 +656,60 @@
       return `${getAssetsPath()}/${product.id}/${fileName}`;
     }
 
-    // Preload frames
+    // Preload frames with caching and async decode
     async function preloadFrames(product) {
-      const promises = [];
-      for (let i = 1; i <= product.frameCount; i++) {
-        const img = new Image();
-        img.src = getFramePath(product, i);
-        promises.push(new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        }));
+      frameCache = new Array(product.frameCount);
+      const startTime = performance.now();
+      
+      // Load first frame immediately for instant display
+      const firstImg = new Image();
+      firstImg.src = getFramePath(product, 1);
+      await new Promise(resolve => {
+        firstImg.onload = resolve;
+        firstImg.onerror = resolve;
+      });
+      
+      // Decode first frame if supported
+      if (firstImg.decode) {
+        try { await firstImg.decode(); } catch(e) {}
       }
-      await Promise.all(promises);
+      frameCache[0] = firstImg;
+      
+      // Load remaining frames in parallel batches for better performance
+      const BATCH_SIZE = 10;
+      for (let batch = 0; batch < Math.ceil((product.frameCount - 1) / BATCH_SIZE); batch++) {
+        const batchPromises = [];
+        const startIdx = batch * BATCH_SIZE + 2; // Start from frame 2
+        const endIdx = Math.min(startIdx + BATCH_SIZE, product.frameCount + 1);
+        
+        for (let i = startIdx; i < endIdx; i++) {
+          const img = new Image();
+          const frameIdx = i - 1; // 0-indexed cache
+          
+          const loadPromise = new Promise(async (resolve) => {
+            img.onload = async () => {
+              // Async decode for smoother playback
+              if (img.decode) {
+                try { await img.decode(); } catch(e) {}
+              }
+              frameCache[frameIdx] = img;
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = getFramePath(product, i);
+          });
+          
+          batchPromises.push(loadPromise);
+        }
+        
+        await Promise.all(batchPromises);
+      }
+      
+      const loadTime = (performance.now() - startTime).toFixed(0);
+      console.log(`✅ Frames loaded in ${loadTime}ms`);
     }
 
-    // Play icon animation
+    // Play icon animation using cached frames
     function playAnimation(product) {
       const iconFrame = document.getElementById('iconFrame');
       let lastTime = 0;
@@ -679,7 +721,14 @@
         if (elapsed >= FRAME_DURATION) {
           currentFrame++;
           if (currentFrame <= product.frameCount) {
-            iconFrame.src = getFramePath(product, currentFrame);
+            // Use cached frame if available
+            const cachedImg = frameCache[currentFrame - 1];
+            if (cachedImg && cachedImg.complete) {
+              iconFrame.src = cachedImg.src;
+            } else {
+              // Fallback to path (shouldn't happen if preload worked)
+              iconFrame.src = getFramePath(product, currentFrame);
+            }
             lastTime = timestamp;
           } else {
             return; // Stay on last frame
@@ -690,7 +739,12 @@
       }
       
       currentFrame = 1;
-      iconFrame.src = getFramePath(product, 1);
+      // Use cached first frame
+      if (frameCache[0]) {
+        iconFrame.src = frameCache[0].src;
+      } else {
+        iconFrame.src = getFramePath(product, 1);
+      }
       animationId = requestAnimationFrame(animate);
     }
 
@@ -839,35 +893,34 @@
       const container = document.getElementById('splashContainer');
       const textElement = document.getElementById('splashText');
       const indicator = document.getElementById('productIndicator');
+      const iconFrame = document.getElementById('iconFrame');
       
-      // Load saved settings
+      // Load saved settings first
       loadSettings();
       
-      setStatus('Carregando Rive...');
-      
-      // Init Rive first
-      await initRive();
-      
-      setStatus('Sorteando produto...');
-      
-      // Select random product
+      // Select product early so we can start loading
       selectedProduct = selectRandomProduct();
       indicator.textContent = selectedProduct.id.toUpperCase() + (useLowRez ? ' (LOW REZ)' : '');
-      
-      // Set text
       textElement.textContent = selectedProduct.text;
       
-      setStatus('Carregando frames...');
+      setStatus('Carregando...');
       
-      // Preload frames
-      await preloadFrames(selectedProduct);
+      // Load first frame immediately for instant visual
+      const firstFramePath = getFramePath(selectedProduct, 1);
+      iconFrame.src = firstFramePath;
+      
+      // Start loading Rive and remaining frames in PARALLEL
+      const [riveResult] = await Promise.all([
+        initRive(),
+        preloadFrames(selectedProduct)
+      ]);
       
       setStatus('Exibindo splash...');
       
-      // Show container
+      // Show container (first frame already visible)
       container.classList.add('visible');
       
-      // Play icon animation
+      // Play icon animation (frames already cached)
       playAnimation(selectedProduct);
       
       // After reading time, trigger Rive ENTER
