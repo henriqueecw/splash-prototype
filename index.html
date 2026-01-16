@@ -130,10 +130,13 @@
       position: absolute;
       top: 0;
       left: 0;
+      right: 0;
+      bottom: 0;
       width: 100%;
       height: 100%;
       z-index: 10;
       display: none;
+      overflow: hidden;
     }
 
     #rive-container.visible {
@@ -141,9 +144,13 @@
     }
 
     #rive-canvas {
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
       display: block;
+      object-fit: cover;
     }
 
     /* Settings button - OUTSIDE phone frame with protection */
@@ -486,7 +493,7 @@
 
   <!-- Phone Frame (iPhone 14 Pro size) -->
   <div class="phone-frame" id="phoneFrame">
-    <div class="screen-content">
+    <div class="screen-content" id="screenContent">
       <!-- Splash Container -->
       <div class="splash-container" id="splashContainer">
         <div class="icon-container">
@@ -754,16 +761,18 @@
         const canvas = document.getElementById('rive-canvas');
         const container = document.getElementById('rive-container');
         
-        // Get phone frame dimensions
-        const phoneFrame = document.getElementById('phoneFrame');
-        const rect = phoneFrame.getBoundingClientRect();
+        // Get screen content dimensions (inner area without frame borders)
+        const screenContent = document.getElementById('screenContent');
+        const rect = screenContent.getBoundingClientRect();
         
-        // Set canvas size to match phone screen
+        // Set canvas size to match screen content exactly
         const dpr = window.devicePixelRatio || 1;
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
-        canvas.style.width = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        
+        console.log(`Canvas size: ${rect.width}x${rect.height}, DPR: ${dpr}`);
         
         try {
           riveInstance = new rive.Rive({
@@ -844,14 +853,14 @@
     // Handle resize
     function handleResize() {
       const canvas = document.getElementById('rive-canvas');
-      const phoneFrame = document.getElementById('phoneFrame');
-      const rect = phoneFrame.getBoundingClientRect();
+      const screenContent = document.getElementById('screenContent');
+      const rect = screenContent.getBoundingClientRect();
       
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
       
       if (riveInstance) {
         riveInstance.resizeDrawingSurfaceToCanvas();
