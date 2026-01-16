@@ -341,50 +341,6 @@
       margin: 16px 0;
     }
 
-    /* Toggle switch for low rez */
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 48px;
-      height: 26px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 13px;
-      cursor: pointer;
-      transition: background 0.3s;
-      flex-shrink: 0;
-    }
-
-    .toggle-switch.active {
-      background: #00D26A;
-    }
-
-    .toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.3s;
-    }
-
-    .toggle-switch.active::after {
-      transform: translateX(22px);
-    }
-
-    .toggle-label {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
-    }
-
     /* Mobile styles */
     @media (max-width: 500px) {
       body {
@@ -441,16 +397,6 @@
   <div class="settings-panel" id="settingsPanel">
     <h3>⚙ Configurações</h3>
     
-    <!-- Low Rez Toggle -->
-    <div class="setting-group">
-      <div class="toggle-container">
-        <span class="toggle-label">Usar assets Low Rez</span>
-        <div class="toggle-switch" id="lowRezToggle" onclick="toggleLowRez()"></div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    
     <div class="setting-group">
       <label>Tamanho do Ícone</label>
       <input type="range" id="iconSizeSlider" min="60" max="200" value="120" oninput="updateIconSize(this.value)">
@@ -488,6 +434,8 @@
         <button class="preset-btn" onclick="selectProduct('pix')">PIX</button>
         <button class="preset-btn" onclick="selectProduct('link')">Link</button>
         <button class="preset-btn" onclick="selectProduct('loja')">Loja</button>
+        <button class="preset-btn" onclick="selectProduct('nitro')">Nitro</button>
+        <button class="preset-btn" onclick="selectProduct('JIM')">JIM</button>
         <button class="preset-btn" onclick="selectProduct('random')">🎲 Random</button>
       </div>
     </div>
@@ -522,19 +470,41 @@
         id: 'pix',
         text: 'Receba via Pix na hora',
         frameCount: 63,
-        framePattern: 'OFF83_badge_pix_ANIMATION_HM_001_XXXX.webp'
+        framePattern: 'OFF83_badge_pix_ANIMATION_HM_001_XXXX.webp',
+        startFrame: 1,
+        padLength: 4
       },
       {
         id: 'link',
         text: 'Crie links de pagamento em segundos',
         frameCount: 53,
-        framePattern: 'OFF83_Link_ANIMATION_HM_001_XXXX.webp'
+        framePattern: 'OFF83_Link_ANIMATION_HM_001_XXXX.webp',
+        startFrame: 1,
+        padLength: 4
       },
       {
         id: 'loja',
         text: 'Sua loja online pronta pra vender',
         frameCount: 60,
-        framePattern: 'OFF83_loja_online_ANIMATION_HM_001_XXXX.webp'
+        framePattern: 'OFF83_loja_online_ANIMATION_HM_001_XXXX.webp',
+        startFrame: 1,
+        padLength: 4
+      },
+      {
+        id: 'nitro',
+        text: 'Receba suas vendas na hora',
+        frameCount: 120,
+        framePattern: 'ATIVADO_Foguinho_60fps_500px__XXXXX.webp',
+        startFrame: 0,
+        padLength: 5
+      },
+      {
+        id: 'JIM',
+        text: 'Conheça o JIM, seu assistente de IA',
+        frameCount: 60, // Placeholder - será atualizado
+        framePattern: 'JIM_XXXXX.webp', // Placeholder - será atualizado
+        startFrame: 0,
+        padLength: 5
       }
     ];
 
@@ -556,25 +526,11 @@
     let customReadingTime = null;
     let loadingTime = 3000;
     let forcedProduct = null;
-    let useLowRez = false;
-
-    // Get the assets path based on low rez setting
-    function getAssetsPath() {
-      return useLowRez ? 'assets/products_low_rez' : 'assets/products';
-    }
 
     // Settings functions
     function toggleSettings() {
       const panel = document.getElementById('settingsPanel');
       panel.classList.toggle('visible');
-    }
-
-    function toggleLowRez() {
-      useLowRez = !useLowRez;
-      const toggle = document.getElementById('lowRezToggle');
-      toggle.classList.toggle('active', useLowRez);
-      localStorage.setItem('useLowRez', useLowRez);
-      location.reload();
     }
 
     function updateIconSize(size) {
@@ -659,10 +615,13 @@
     }
 
     // Generate frame path
-    function getFramePath(product, frameNumber) {
-      const paddedNumber = String(frameNumber).padStart(4, '0');
-      const fileName = product.framePattern.replace('XXXX', paddedNumber);
-      return `${getAssetsPath()}/${product.id}/${fileName}`;
+    function getFramePath(product, frameIndex) {
+      const frameNumber = (product.startFrame || 0) + frameIndex;
+      const padLength = product.padLength || 4;
+      const paddedNumber = String(frameNumber).padStart(padLength, '0');
+      const placeholder = 'X'.repeat(padLength);
+      const fileName = product.framePattern.replace(placeholder, paddedNumber);
+      return `assets/products/${product.id}/${fileName}`;
     }
 
     // Preload frames with caching and async decode
@@ -672,7 +631,7 @@
       
       // Load first frame immediately for instant display
       const firstImg = new Image();
-      firstImg.src = getFramePath(product, 1);
+      firstImg.src = getFramePath(product, 0);
       await new Promise(resolve => {
         firstImg.onload = resolve;
         firstImg.onerror = resolve;
@@ -688,12 +647,12 @@
       const BATCH_SIZE = 10;
       for (let batch = 0; batch < Math.ceil((product.frameCount - 1) / BATCH_SIZE); batch++) {
         const batchPromises = [];
-        const startIdx = batch * BATCH_SIZE + 2; // Start from frame 2
-        const endIdx = Math.min(startIdx + BATCH_SIZE, product.frameCount + 1);
+        const startIdx = batch * BATCH_SIZE + 1; // Start from frame index 1
+        const endIdx = Math.min(startIdx + BATCH_SIZE, product.frameCount);
         
         for (let i = startIdx; i < endIdx; i++) {
           const img = new Image();
-          const frameIdx = i - 1; // 0-indexed cache
+          const frameIdx = i; // 0-indexed cache
           
           const loadPromise = new Promise(async (resolve) => {
             img.onload = async () => {
@@ -729,9 +688,9 @@
         
         if (elapsed >= FRAME_DURATION) {
           currentFrame++;
-          if (currentFrame <= product.frameCount) {
+          if (currentFrame < product.frameCount) {
             // Use cached frame if available
-            const cachedImg = frameCache[currentFrame - 1];
+            const cachedImg = frameCache[currentFrame];
             if (cachedImg && cachedImg.complete) {
               iconFrame.src = cachedImg.src;
             } else {
@@ -747,12 +706,12 @@
         animationId = requestAnimationFrame(animate);
       }
       
-      currentFrame = 1;
+      currentFrame = 0;
       // Use cached first frame
       if (frameCache[0]) {
         iconFrame.src = frameCache[0].src;
       } else {
-        iconFrame.src = getFramePath(product, 1);
+        iconFrame.src = getFramePath(product, 0);
       }
       animationId = requestAnimationFrame(animate);
     }
@@ -900,11 +859,6 @@
 
     // Load saved settings
     function loadSettings() {
-      // Low rez toggle
-      useLowRez = localStorage.getItem('useLowRez') === 'true';
-      const lowRezToggle = document.getElementById('lowRezToggle');
-      lowRezToggle.classList.toggle('active', useLowRez);
-      
       // Icon size
       iconSize = getIconSize();
       document.getElementById('iconSizeSlider').value = iconSize;
@@ -940,13 +894,13 @@
       
       // Select product early so we can start loading
       selectedProduct = selectRandomProduct();
-      indicator.textContent = selectedProduct.id.toUpperCase() + (useLowRez ? ' (LOW REZ)' : '');
+      indicator.textContent = selectedProduct.id.toUpperCase();
       textElement.textContent = selectedProduct.text;
       
       setStatus('Carregando...');
       
       // Load first frame immediately for instant visual
-      const firstFramePath = getFramePath(selectedProduct, 1);
+      const firstFramePath = getFramePath(selectedProduct, 0);
       iconFrame.src = firstFramePath;
       
       // Start loading Rive and remaining frames in PARALLEL
